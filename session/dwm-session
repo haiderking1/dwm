@@ -1,0 +1,8 @@
+#!/bin/sh
+export XDG_CURRENT_DESKTOP=dwm
+export XDG_SESSION_DESKTOP=dwm
+export XDG_SESSION_TYPE=x11
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    exec /usr/bin/dbus-run-session -- /home/soka/.local/bin/dwm
+fi
+exec /home/soka/.local/bin/dwm

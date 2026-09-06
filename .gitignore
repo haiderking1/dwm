@@ -1,0 +1,17 @@
+# Compiled output and runtime files
+*.o
+*.d
+*.log
+/dwm
+/dwm-*.tar.gz
+**/build/
+**/.build.*/
+**/tests/artifacts/
+/core
+/core.[0-9]*
+
+# Credentials and local environment files
+.env
+.env.*
+*.pem
+*.key
