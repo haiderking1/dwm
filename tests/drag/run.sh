@@ -23,7 +23,7 @@ set -- -std=c99 -Wall -Wextra -Werror -Wpedantic -Wshadow \
 	-Wstrict-prototypes -Wmissing-prototypes -Wformat=2 -Wundef -Wvla
 "$cc" "$@" -O2 "$here/runner.c" -o "$build/placement"
 "$build/placement"
-"$cc" "$@" -O2 "$here/mouse/runner.c" -o "$build/mouse"
+"$cc" "$@" -O2 "$here/mouse/runner.c" "$here"/../../wm/bsp/core/*.c -lm -o "$build/mouse"
 "$build/mouse"
 
 if [ "$sanitize" != 0 ]; then
@@ -38,7 +38,7 @@ if [ "$sanitize" != 0 ]; then
 		"$build/placement-sanitized"
 		"$cc" "$@" -O1 -g -fno-omit-frame-pointer \
 			-fsanitize=address,undefined -fno-sanitize-recover=all \
-			"$here/mouse/runner.c" -o "$build/mouse-sanitized"
+			"$here/mouse/runner.c" "$here"/../../wm/bsp/core/*.c -lm -o "$build/mouse-sanitized"
 		"$build/mouse-sanitized"
 	else
 		printf '%s\n' 'drag: ASan/UBSan unavailable' >&2

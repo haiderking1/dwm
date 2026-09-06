@@ -1,4 +1,5 @@
 #include "support/fixture.h"
+#include "../../../wm/bsp/integration/forest.inc"
 #include "support/clients.inc"
 #include "support/xlib.inc"
 #include "support/queue.inc"
@@ -7,6 +8,7 @@
 
 /* Both the placement decisions and the event loop are production code. */
 #include "../../../wm/drag/placement.inc"
+#include "../../../wm/drag/bsp.inc"
 #include "../../../wm/drag/mouse.inc"
 
 #include "support/assertions.inc"

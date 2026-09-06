@@ -41,9 +41,10 @@ static const int refreshrate = 120;  /* refresh rate (per second) for client mov
 
 static const Layout layouts[] = {
 	/* symbol     arrange function */
-	{ "[]=",      tile },    /* first entry is default */
+	{ "BSP",      dwindle }, /* first entry is default; checkpoint index 0 */
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
+	{ "[]=",      tile },    /* weighted tile; keep legacy indices 1 and 2 */
 };
 
 /* key definitions */

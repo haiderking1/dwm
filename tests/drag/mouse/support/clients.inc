@@ -40,6 +40,7 @@ fixture_init(void)
 	f.enter_pending = 2;
 	for (i = 0; i < 2; ++i) {
 		Monitor *m = &f.monitors[i];
+		m->num = (int)i;
 		m->mx = 400 * (int)i;
 		m->slotx = m->mx + 10;
 		m->sloty = 40;
@@ -59,7 +60,8 @@ fixture_init(void)
 		c->x = 10 + 200 * (int)i;
 		c->y = 40;
 		c->w = 180;
-		c->h = 140;
+		c->cfact = i ? 2.5f : 1.25f;
+		c->h = 140 + (int)(8 * c->cfact);
 		c->bw = 2;
 		c->tags = 1;
 		c->mon = &f.monitors[0];

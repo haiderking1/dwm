@@ -8,7 +8,7 @@ drag_tiled(Client *initial)
 	                  | SubstructureNotifyMask | StructureNotifyMask | PropertyChangeMask;
 	Window window = initial->win;
 	Client *c, *target;
-	Monitor *origin;
+	Monitor *origin, *destination;
 	XEvent ev;
 	Time lasttime = 0;
 	int startx, starty, px, py, ox = initial->x, oy = initial->y;
@@ -63,8 +63,11 @@ drag_tiled(Client *initial)
 		XMoveWindow(dpy, window, c->x, c->y);
 		if (released && moved && drag_eligible(c)) {
 			target = drag_target(recttomon(px, py, 1, 1), c, px, py);
-			if (drag_swap(c, target))
+			destination = target ? target->mon : NULL;
+			if (bsp_drag_prepare(c, target) && drag_swap(c, target)) {
+				bsp_drag_swap(c, target, origin, destination);
 				updateclientlist();
+			}
 		}
 		focus(c);
 		arrange(origin);

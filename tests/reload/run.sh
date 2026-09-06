@@ -8,6 +8,10 @@ trap 'rm -rf "$work"' EXIT HUP INT TERM
     -o "$work/test-build"
 "$work/test-build" "$work/test-build"
 
-"${CC:-cc}" -D_POSIX_C_SOURCE=200809L -std=c99 -pedantic -Wall -Wextra -Werror \
-    "$here/test_state.c" -o "$work/test-state"
-"$work/test-state"
+for test in test_state.c test_weights.c forest/test_forest.c; do
+    name=$(basename "$test" .c)
+    "${CC:-cc}" -D_POSIX_C_SOURCE=200809L -std=c99 -pedantic -Wall -Wextra -Werror \
+        ${CFLAGS:-} "$here/$test" "$here"/../../wm/bsp/core/*.c \
+        ${LDFLAGS:-} -lm -o "$work/$name"
+    "$work/$name"
+done

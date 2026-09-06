@@ -1,7 +1,7 @@
 static int
 reload_state_save(void)
 {
-	ReloadHeader header = { 0x44574d52U, 1, 0, 0, selmon->num };
+	ReloadHeader header = { 0x44574d52U, 3, 0, 0, selmon->num };
 	ReloadMonitor monitor;
 	ReloadClient client;
 	Monitor *m;
@@ -48,6 +48,11 @@ reload_state_save(void)
 			for (s = m->stack; s && s != c; s = s->snext) client.stackorder++;
 			if (fwrite(&client, sizeof client, 1, file) != 1) goto out;
 		}
+	/* V2 appends weights after the unchanged V1 client records. */
+	for (m = mons; m; m = m->next)
+		for (c = m->clients; c; c = c->next)
+			if (fwrite(&c->cfact, sizeof c->cfact, 1, file) != 1) goto out;
+	if (!bsp_checkpoint_write(file)) goto out;
 	if (fflush(file) || fseek(file, 0, SEEK_SET)) goto out;
 	/* dup deliberately survives exec; fclose removes the original handle. */
 	fd = dup(fileno(file));

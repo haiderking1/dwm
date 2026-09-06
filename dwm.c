@@ -94,6 +94,7 @@ typedef struct Client Client;
 struct Client {
 	char name[256];
 	float mina, maxa;
+	float cfact; /* relative share within a tiled column */
 	int x, y, w, h;
 	int oldx, oldy, oldw, oldh;
 	int basew, baseh, incw, inch, maxw, maxh, minw, minh, hintsvalid;
@@ -278,6 +279,8 @@ static Window root, wmcheckwin;
 
 /* configuration, allows nested code to access above variables */
 #include "wm/fullscreen.h"
+#include "wm/bsp/bsp.h"
+#include "wm/bsp/hooks.h"
 #include "config.h"
 #include "bar/wm/docks.inc"
 #include "bar/wm/ipc.inc"
@@ -285,7 +288,18 @@ static Window root, wmcheckwin;
 #include "reload/save.inc"
 #include "reload/restore.inc"
 #include "reload/control.inc"
+#include "wm/bsp/integration/forest.inc"
+#include "wm/bsp/integration/actions.inc"
+#include "wm/bsp/integration/checkpoint.inc"
+#include "wm/bsp/integration/mouse.inc"
+#include "wm/resize/math.h"
+#include "wm/resize/layout.inc"
+#include "wm/resize/topology.inc"
+#include "wm/resize/precision.inc"
+#include "wm/resize/boundary.inc"
+#include "wm/resize/mouse.inc"
 #include "wm/drag/placement.inc"
+#include "wm/drag/bsp.inc"
 #include "wm/drag/mouse.inc"
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
@@ -519,6 +533,8 @@ void
 cleanupmon(Monitor *mon)
 {
 	Monitor *m;
+
+	bsp_forget_monitor(&bsp_forest, mon->num);
 
 	if (mon == mons)
 		mons = mons->next;
@@ -835,6 +851,7 @@ focus(Client *c)
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
 	}
 	selmon->sel = c;
+	bsp_focus_client(c);
 	drawbars();
 }
 
@@ -1066,6 +1083,7 @@ manage(Window w, XWindowAttributes *wa)
 	if (qs_dock_watch(w))
 		return;
 	c = ecalloc(1, sizeof(Client));
+	c->cfact = 1.0f;
 	c->win = w;
 	/* geometry */
 	c->x = c->oldx = wa->x;
@@ -1351,6 +1369,13 @@ resizemouse(const Arg *arg)
 		return;
 	if (c->isfullscreen) /* no support resizing fullscreen windows by mouse */
 		return;
+	if (!c->isfloating && c->mon->lt[c->mon->sellt]->arrange) {
+		if (c->mon->lt[c->mon->sellt]->arrange == dwindle)
+			bsp_resize_mouse(c);
+		else if (c->mon->lt[c->mon->sellt]->arrange == tile)
+			resize_tiled(c);
+		return;
+	}
 	restack(selmon);
 	ocx = c->x;
 	ocy = c->y;
@@ -1603,6 +1628,10 @@ setmfact(const Arg *arg)
 
 	if (!arg || !selmon->lt[selmon->sellt]->arrange)
 		return;
+	if (selmon->lt[selmon->sellt]->arrange == dwindle) {
+		bsp_adjust_selected(arg->f);
+		return;
+	}
 	f = arg->f < 1.0 ? arg->f + selmon->mfact : arg->f - 1.0;
 	if (f < 0.05 || f > 0.95)
 		return;
@@ -1766,29 +1795,7 @@ tagmon(const Arg *arg)
 void
 tile(Monitor *m)
 {
-	unsigned int i, n, h, mw, my, ty;
-	Client *c;
-
-	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
-	if (n == 0)
-		return;
-
-	if (n > m->nmaster)
-		mw = m->nmaster ? m->ww * m->mfact : 0;
-	else
-		mw = m->ww;
-	for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
-		if (i < m->nmaster) {
-			h = (m->wh - my) / (MIN(n, m->nmaster) - i);
-			resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
-			if (my + HEIGHT(c) < m->wh)
-				my += HEIGHT(c);
-		} else {
-			h = (m->wh - ty) / (n - i);
-			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
-			if (ty + HEIGHT(c) < m->wh)
-				ty += HEIGHT(c);
-		}
+	resize_tile(m);
 }
 
 void
@@ -1865,6 +1872,7 @@ unmanage(Client *c, int destroyed)
 	Monitor *m = c->mon;
 	XWindowChanges wc;
 
+	bsp_forget_window(&bsp_forest, c->win);
 	detach(c);
 	detachstack(c);
 	if (!destroyed) {
@@ -2225,6 +2233,11 @@ void
 zoom(const Arg *arg)
 {
 	Client *c = selmon->sel;
+
+	if (selmon->lt[selmon->sellt]->arrange == dwindle) {
+		bsp_zoom_selected();
+		return;
+	}
 
 	if (!selmon->lt[selmon->sellt]->arrange || !c || c->isfloating)
 		return;

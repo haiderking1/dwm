@@ -25,8 +25,8 @@ expect_reconfigured(void)
 	assert(f.grabbed && f.dispatches == 1 && f.arrangements == 1);
 	assert(f.source->x == 30 && f.source->y == 100);
 	assert(f.target->x == 230 && f.target->y == 100);
-	assert(f.source->w == 160 && f.source->h == 120);
-	assert(f.target->w == 160 && f.target->h == 120);
+	assert(f.source->w == 160 && f.source->h == 130);
+	assert(f.target->w == 160 && f.target->h == 140);
 	assert(!f.source->isfloating && !f.target->isfloating);
 	assert(f.monitors[0].clients == f.source && f.source->next == f.target);
 	assert(f.updates == 0 && f.focuses == 0);

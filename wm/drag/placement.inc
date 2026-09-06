@@ -29,6 +29,7 @@ drag_swap(Client *a, Client *b)
 	Monitor *am, *bm;
 	Client **ap, **bp, **as, **bs, *next;
 	unsigned int tags;
+	float weight;
 
 	if (a == b || !drag_eligible(a) || !drag_eligible(b))
 		return 0;
@@ -56,6 +57,10 @@ drag_swap(Client *a, Client *b)
 		a->next = b->next;
 		b->next = next;
 	}
+	/* Weights belong to slots, not the windows occupying them. */
+	weight = a->cfact;
+	a->cfact = b->cfact;
+	b->cfact = weight;
 	if (am != bm) {
 		*as = b;
 		*bs = a;

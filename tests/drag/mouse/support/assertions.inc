@@ -60,7 +60,8 @@ expect_order(int swapped)
 	assert(first->x == m->slotx && second->x == m->slotx + m->step);
 	assert(first->y == m->sloty && second->y == m->sloty);
 	assert(first->w == m->slotw && second->w == m->slotw);
-	assert(first->h == m->sloth && second->h == m->sloth);
+	assert(first->cfact == 1.25f && second->cfact == 2.5f);
+	assert(first->h == m->sloth + 10 && second->h == m->sloth + 20);
 	assert(first->bw == 2 && second->bw == 2);
 	assert(first->tags == 1 && second->tags == 1);
 	assert(!first->isfloating && !second->isfloating);

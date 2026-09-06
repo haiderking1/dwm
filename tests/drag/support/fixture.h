@@ -15,6 +15,7 @@ typedef struct {
 
 struct Client {
 	int x, y, w, h, bw;
+	float cfact;
 	int isfloating, isfullscreen;
 	unsigned int tags;
 	Client *next, *snext;
@@ -72,6 +73,7 @@ fixture_init(Fixture *f, size_t left, size_t right)
 			c->w = 30;
 			c->h = 20;
 			c->bw = 2;
+			c->cfact = 0.5f + 1.25f * (float)(offset + i);
 			c->next = i + 1 < counts[m] ? c + 1 : NULL;
 			/* Stack order deliberately differs from client order. */
 			c->snext = i > 0 ? c - 1 : NULL;

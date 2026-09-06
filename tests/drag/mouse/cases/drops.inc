@@ -109,6 +109,8 @@ test_cross_monitor_drop(void)
 	assert(!f.source->next && !f.source->snext && !f.target->next && !f.target->snext);
 	assert(f.source->mon == right && f.target->mon == left);
 	assert(f.source->tags == 2 && f.target->tags == 1);
+	assert(f.source->cfact == 2.5f && f.target->cfact == 1.25f);
+	assert(f.source->h == f.target_before.h && f.target->h == f.source_before.h);
 	assert(!f.source->isfloating && !f.target->isfloating);
 	assert(f.source->x == 410 && f.target->x == 10);
 	assert(f.source->y == 40 && f.target->y == 40);

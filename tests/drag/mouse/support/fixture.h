@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../../../../wm/bsp/bsp.h"
 
 typedef struct Client Client;
 typedef struct Monitor Monitor;
@@ -14,7 +15,8 @@ typedef struct { void (*arrange)(Monitor *); } Layout;
 struct Client {
 	Window win;
 	int x, y, w, h, bw;
-	int isfloating, isfullscreen;
+	float cfact;
+	int isfloating, isfullscreen, oldstate;
 	unsigned int tags;
 	Client *next, *snext;
 	Monitor *mon;
@@ -23,6 +25,7 @@ struct Monitor {
 	Client *clients, *stack, *sel;
 	unsigned int tagset[2], seltags, sellt;
 	const Layout *lt[2];
+	int num, wx, wy, ww, wh;
 	int mx, slotx, sloty, slotw, sloth, step;
 };
 
@@ -67,8 +70,14 @@ static TestCursor *cursor[] = { &move_cursor };
 static const int refreshrate = 60;
 static void (*handler[LASTEvent])(XEvent *);
 
-static void tile_fixture(Monitor *mon);
-static const Layout tiled_layout = { tile_fixture };
+/* Legacy mouse scenarios use a weighted layout and an empty BSP registry.
+ * The real swap adapter still runs; BSP geometry is covered separately. */
+#define TAGMASK 1023u
+#define MAX(A,B) ((A) > (B) ? (A) : (B))
+static void dwindle(Monitor *mon);
+static void resizeclient(Client *, int, int, int, int);
+static void tile(Monitor *mon);
+static const Layout tiled_layout = { tile };
 static const Layout floating_layout = { NULL };
 static Client *wintoclient(Window window);
 static void arrange(Monitor *mon);

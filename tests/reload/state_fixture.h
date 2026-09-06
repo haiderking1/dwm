@@ -13,11 +13,12 @@ struct Client {
 	int x, y, w, h, oldx, oldy, oldw, oldh, bw, oldbw;
 	int isfloating, isfullscreen, oldstate;
 	unsigned int tags;
+	float cfact;
 	Monitor *mon;
 	Client *next, *snext;
 };
 struct Monitor {
-	int num, nmaster, showbar, topbar, mx, my, mw, mh, wx, by, ww;
+	int num, nmaster, showbar, topbar, mx, my, mw, mh, wx, wy, wh, by, ww;
 	unsigned int tagset[2], seltags, sellt;
 	float mfact;
 	Window barwin;
@@ -32,6 +33,8 @@ struct Monitor {
 static Layout layouts[3];
 static Monitor *mons, *selmon;
 static int borderpx = 1, bh = 20, dpy;
+static unsigned int live_calls;
+#include "forest/wrappers.h"
 static Client *wintoclient(Window win) {
 	Monitor *m; Client *c;
 	for (m = mons; m; m = m->next)
@@ -52,15 +55,20 @@ static void detachstack(Client *c) {
 	if (c->mon->sel == c) c->mon->sel = c->mon->stack;
 }
 static void resizeclient(Client *c, int x, int y, int w, int h) {
+	live_calls++;
 	c->oldx=c->x; c->oldy=c->y; c->oldw=c->w; c->oldh=c->h;
 	c->x=x; c->y=y; c->w=w; c->h=h;
 }
-static void updatebarpos(Monitor *m) { (void)m; }
+static void updatebarpos(Monitor *m) { live_calls++; (void)m; }
 static void XMoveResizeWindow(int display, Window win, int x, int y, int w, int h) {
+	live_calls++;
 	(void)display; (void)win; (void)x; (void)y; (void)w; (void)h;
 }
-static void focus(Client *c) { selmon->sel = c; }
-static void arrange(Monitor *m) { (void)m; }
+static void focus(Client *c) { live_calls++; selmon->sel = c; }
+static void arrange(Monitor *m) {
+	live_calls++; (void)m;
+	if (checkpoint_before_arrange) checkpoint_before_arrange();
+}
 #include "../../reload/state.h"
 #include "../../reload/save.inc"
 #include "../../reload/restore.inc"

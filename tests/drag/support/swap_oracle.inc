@@ -50,6 +50,9 @@ expect_swap(Fixture *f, Client *a, Client *b)
 		expected.clients[a - f->clients].tags = b->tags;
 		expected.clients[b - f->clients].tags = a->tags;
 	}
+	expected.clients[a - f->clients].cfact = b->cfact;
+	expected.clients[b - f->clients].cfact = a->cfact;
+	assert(a->cfact != b->cfact);
 	assert(drag_swap(a, b) != 0);
 	/* Includes unchanged geometry, tags, selection and nonparticipant fields. */
 	expect_unchanged(f, &expected);

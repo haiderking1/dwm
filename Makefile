@@ -3,7 +3,7 @@
 
 include config.mk
 
-SRC = drw.c dwm.c util.c bar/wm/geometry.c bar/wm/json.c input/settings.c startup/autostart.c reload/build.c
+SRC = drw.c dwm.c util.c bar/wm/geometry.c bar/wm/json.c input/settings.c startup/autostart.c reload/build.c $(wildcard wm/bsp/core/*.c)
 OBJ = ${SRC:.c=.o}
 
 all: dwm bar-bridge
@@ -16,7 +16,10 @@ bar-bridge:
 
 ${OBJ}: config.h config.mk config/commands.h config/keys.h
 dwm.o: input/settings.h wm/fullscreen.h startup/autostart.h config/autostart.h config/reload.h reload/build.h reload/state.h reload/save.inc reload/restore.inc reload/control.inc
-dwm.o: wm/drag/placement.inc wm/drag/mouse.inc
+dwm.o: wm/drag/placement.inc wm/drag/mouse.inc wm/drag/bsp.inc
+dwm.o: wm/bsp/bsp.h wm/bsp/hooks.h $(wildcard wm/bsp/integration/*.inc)
+$(patsubst %.c,%.o,$(wildcard wm/bsp/core/*.c)): wm/bsp/bsp.h $(wildcard wm/bsp/core/*.h)
+dwm.o: wm/resize/math.h wm/resize/layout.inc wm/resize/topology.inc wm/resize/precision.inc wm/resize/boundary.inc wm/resize/mouse.inc
 dwm.o: bar/wm/docks.inc bar/wm/ipc.inc bar/wm/geometry.h bar/wm/json.h
 bar/wm/geometry.o: bar/wm/geometry.h
 bar/wm/json.o: bar/wm/json.h

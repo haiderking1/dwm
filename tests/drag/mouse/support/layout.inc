@@ -1,23 +1,31 @@
+static void
+resizeclient(Client *c, int x, int y, int w, int h)
+{
+	c->x = x; c->y = y; c->w = w; c->h = h;
+	++f.resizes;
+	XMoveWindow(dpy, c->win, x, y);
+}
+
 /* Like resize(), unchanged logical geometry sends no X geometry request.
  * This deliberately cannot repair a preview by arranging unchanged tiles. */
 static void
-tile_fixture(Monitor *mon)
+tile(Monitor *mon)
 {
 	Client *c;
 	int slot = 0;
 	for (c = mon->clients; c; c = c->next) {
-		int x;
+		int x, height = mon->sloth + (int)(8 * c->cfact);
 		assert(slot < 2);
 		if (!ISVISIBLE(c) || c->isfloating || c->isfullscreen)
 			continue;
 		x = mon->slotx + slot++ * mon->step;
 		if (c->x == x && c->y == mon->sloty
-		&& c->w == mon->slotw && c->h == mon->sloth)
+		&& c->w == mon->slotw && c->h == height)
 			continue;
 		c->x = x;
 		c->y = mon->sloty;
 		c->w = mon->slotw;
-		c->h = mon->sloth;
+		c->h = height;
 		++f.resizes;
 		XMoveWindow(dpy, c->win, c->x, c->y);
 	}

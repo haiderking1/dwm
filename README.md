@@ -3,7 +3,9 @@
 My dwm 6.8 setup with a Quickshell bar matching my Jellybeans Waybar theme.
 
 - Super-based shortcuts and ten workspaces.
+- Persistent BSP dwindle trees, with weighted master-and-stack tiling available as an alternative.
 - Super+left-drag swaps tiled windows on drop; empty drops snap back.
+- Super+right-drag resizes shared tile boundaries without making windows float.
 - Fullscreen toggle, flat mouse acceleration, and a 200 ms keyboard repeat delay at about 35 repeats per second.
 - Native autostart and background rebuild/reload with window and workspace restoration.
 - Quickshell workspace controls, clock, RAM, PipeWire volume, and system tray.
@@ -20,6 +22,7 @@ This is a personal setup, not a portable distribution. Paths currently point to 
 | config/autostart.h | Login applications |
 | config/reload.h | Build and reload paths |
 | input/settings.c | Mouse and keyboard settings |
+| wm/bsp/ | Persistent BSP layout and mouse controls |
 | bar/quickshell/ | Quickshell configuration snapshot |
 | bar/bridge/ | Native X11 state and wallpaper bridge |
 | session/ | SDDM session and installer |
@@ -48,6 +51,8 @@ Super+Shift+R rebuilds and reloads dwm without logging out. Quickshell watches i
 | Super+D | Rofi |
 | Super+C | Close window |
 | Super+F | Toggle fullscreen |
+| Super+T / Super+Shift+T | BSP dwindle / weighted master-and-stack |
+| Super+S | Rotate the focused parent split |
 | Super+1–9 / 0 | Select workspace 1–10 |
 | Super+Shift+number | Move window to workspace |
 | Super+Shift+R | Rebuild and reload |
