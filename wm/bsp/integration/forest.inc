@@ -82,7 +82,7 @@ bsp_place_leaf(uint64_t window, BspRect rect, void *context)
 		width = MAX(1, rect.width - 2 * c->bw);
 		height = MAX(1, rect.height - 2 * c->bw);
 		if (c->x != rect.x || c->y != rect.y || c->w != width || c->h != height)
-			resizeclient(c, rect.x, rect.y, width, height);
+			resizeclient_request(c, rect.x, rect.y, width, height);
 	}
 }
 
@@ -97,5 +97,6 @@ dwindle(Monitor *m)
 		return;
 	}
 	bsp_tree_visit(&view->tree, bsp_place_leaf, m);
+	XFlush(dpy);
 	bsp_focus_client(m->sel);
 }

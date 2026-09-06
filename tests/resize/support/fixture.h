@@ -12,6 +12,7 @@ typedef struct Client Client;
 typedef struct Monitor Monitor;
 typedef struct { void (*arrange)(Monitor *); } Layout;
 struct Client {
+	int oldx, oldy, oldw, oldh;
 	Window win;
 	float cfact;
 	int x, y, w, h, bw, isfloating, isfullscreen;
@@ -43,6 +44,7 @@ typedef struct {
 	size_t queued, consumed;
 	int grab_result, pointer_ok, grabbed, grabs, ungrabs, queries;
 	int startx, starty, syncs, flushes, publishes, enter_checks;
+	int coalesced, notifies;
 	int resizes, arrangements, dispatches, docks;
 } Fixture;
 static Fixture f;
@@ -61,7 +63,7 @@ static const Layout monocle_layout = { monocle };
 static const Layout floating_layout = { NULL };
 static Client *nexttiled(Client *c);
 static Client *wintoclient(Window w);
-static void resizeclient(Client *c, int x, int y, int w, int h);
+static void configure(Client *c);
 static void arrange(Monitor *m);
 static int getrootptr(int *x, int *y);
 static int qs_dock_event(XEvent *ev);

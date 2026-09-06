@@ -60,7 +60,7 @@ resize_layout_column(ResizeColumn column, int x, int y, int width, int height)
 		contenth = MAX(1, bottom - top - 2 * c->bw);
 		tiley = y + MIN(top, MAX(0, height - contenth - 2 * c->bw));
 		if (c->x != x || c->y != tiley || c->w != contentw || c->h != contenth)
-			resizeclient(c, x, tiley, contentw, contenth);
+			resizeclient_request(c, x, tiley, contentw, contenth);
 		top = bottom;
 	}
 }
@@ -83,4 +83,5 @@ resize_tile(Monitor *m)
 	if (masters < count)
 		resize_layout_column(resize_column(stack, count - masters, m->wh),
 		                     m->wx + width, m->wy, m->ww - width, m->wh);
+	XFlush(dpy);
 }

@@ -10,13 +10,6 @@ wintoclient(Window window)
 	return NULL;
 }
 
-static void
-resizeclient(Client *c, int x, int y, int w, int h)
-{
-	assert(wintoclient(c->win) == c && !c->isfullscreen);
-	c->x = x; c->y = y; c->w = w; c->h = h;
-	++f.resizes;
-}
 
 static void
 arrange(Monitor *m)

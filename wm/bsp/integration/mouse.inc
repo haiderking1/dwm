@@ -1,7 +1,7 @@
 /* No Client, Monitor, workspace or node pointer survives event dispatch. */
 static BspWorkspace *
 bsp_resize_source(Window window, int monitor, unsigned int tagsmask,
-                  const BspResize *snapshot)
+                  const BspResize *snapshot, int reconcile)
 {
 	Client *c = wintoclient(window);
 	BspWorkspace *view;
@@ -12,10 +12,11 @@ bsp_resize_source(Window window, int monitor, unsigned int tagsmask,
 	|| !ISVISIBLE(c) || c->isfloating || c->isfullscreen
 	|| c->mon->lt[c->mon->sellt]->arrange != dwindle)
 		return NULL;
-	view = bsp_active(c->mon);
+	view = reconcile ? bsp_active(c->mon) :
+	       bsp_workspace(&bsp_forest, monitor, tagsmask, 0);
 	if (!view || view->tree.generation != snapshot->generation)
 		return NULL;
-	b = view->tree.bounds;
+	b = bsp_monitor_bounds(c->mon);
 	if (b.x != snapshot->bounds.x || b.y != snapshot->bounds.y
 	|| b.width != snapshot->bounds.width || b.height != snapshot->bounds.height)
 		return NULL;
@@ -35,7 +36,7 @@ bsp_resize_mouse(Client *initial)
 	Client *c;
 	XEvent ev;
 	Time lasttime = 0;
-	int x, y;
+	int x, y, dock;
 
 	if (initial->isfloating || initial->isfullscreen || !ISVISIBLE(initial)
 	|| initial->mon->lt[initial->mon->sellt]->arrange != dwindle
@@ -47,7 +48,7 @@ bsp_resize_mouse(Client *initial)
 		return;
 	if (!getrootptr(&x, &y))
 		goto ungrab;
-	view = bsp_resize_source(source, monitor, tagsmask, &snapshot);
+	view = bsp_resize_source(source, monitor, tagsmask, &snapshot, 0);
 	if (!view || !bsp_resize_begin(&view->tree, source, x, y, &snapshot))
 		goto ungrab;
 	for (;;) {
@@ -55,7 +56,8 @@ bsp_resize_mouse(Client *initial)
 		if (ev.type == MotionNotify || ev.type == ButtonRelease) {
 			if (ev.type == ButtonRelease && ev.xbutton.button != Button3)
 				continue;
-			view = bsp_resize_source(source, monitor, tagsmask, &snapshot);
+			mouse_coalesce_motion(&ev);
+			view = bsp_resize_source(source, monitor, tagsmask, &snapshot, 0);
 			if (!view)
 				break;
 			if (ev.type == MotionNotify) {
@@ -68,18 +70,25 @@ bsp_resize_mouse(Client *initial)
 			}
 			if (!bsp_resize_update(&view->tree, &snapshot, x, y))
 				break;
-			if ((c = wintoclient(source)))
-				arrange(c->mon);
+			if ((c = wintoclient(source))) {
+				/* The tree geometry is ready; stacking and visibility have
+				 * not changed. Queue only changed client rectangles. */
+				bsp_tree_visit(&view->tree, bsp_place_leaf, c->mon);
+				XFlush(dpy);
+			}
 			if (ev.type == ButtonRelease)
 				break;
 		} else if (ev.type != ButtonPress) {
-			if (!qs_dock_event(&ev) && ev.type >= 0 && ev.type < LASTEvent && handler[ev.type])
+			dock = qs_dock_event(&ev);
+			if (!dock && ev.type >= 0 && ev.type < LASTEvent && handler[ev.type])
 				handler[ev.type](&ev);
-			if (!bsp_resize_source(source, monitor, tagsmask, &snapshot))
+			if (!bsp_resize_source(source, monitor, tagsmask, &snapshot,
+			                       mouse_reconcile_event(&ev, dock)))
 				break;
+			if (mouse_publish_event(&ev, dock))
+				qs_publish();
+			XFlush(dpy);
 		}
-		qs_publish();
-		XFlush(dpy);
 	}
 ungrab:
 	XUngrabPointer(dpy, CurrentTime);

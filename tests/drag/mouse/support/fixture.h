@@ -75,7 +75,7 @@ static void (*handler[LASTEvent])(XEvent *);
 #define TAGMASK 1023u
 #define MAX(A,B) ((A) > (B) ? (A) : (B))
 static void dwindle(Monitor *mon);
-static void resizeclient(Client *, int, int, int, int);
+static void resizeclient_request(Client *, int, int, int, int);
 static void tile(Monitor *mon);
 static const Layout tiled_layout = { tile };
 static const Layout floating_layout = { NULL };

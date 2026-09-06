@@ -15,14 +15,6 @@ wintoclient(Window w)
 	return NULL;
 }
 
-static void
-resizeclient(Client *c, int x, int y, int w, int h)
-{
-	assert(c == wintoclient(c->win));
-	assert(w > 0 && h > 0);
-	c->x = x; c->y = y; c->w = w; c->h = h;
-	++f.resizes;
-}
 
 static void
 tile(Monitor *m)

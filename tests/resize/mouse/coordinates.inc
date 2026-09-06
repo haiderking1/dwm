@@ -33,7 +33,7 @@ test_mouse_coordinates(void)
 		assert(f.clients[3]->cfact == 1.0f);
 		assert(f.mon->clients == f.clients[0] && f.mon->sel == source);
 		assert(source->next == f.clients[2] && source->mon == f.mon && !source->isfloating);
-		assert(f.arrangements == (mode ? 2 : 1));
+		assert(f.arrangements == 0); /* geometry frames never restack */
 		fixture_dispose();
 	}
 	/* Moving into another monitor's coordinates clamps this monitor's split.
@@ -71,7 +71,7 @@ test_mouse_buttons(void)
 	push_pointer(ButtonRelease, Button3, 300, 150, 102);
 	resize_tiled(f.mon->sel);
 	expect_mouse_cleanup();
-	assert(f.consumed == f.queued && f.arrangements == 1);
+	assert(f.consumed == f.queued && f.arrangements == 0);
 	assert(HEIGHT(f.clients[1]) == 350 && WIDTH(f.clients[0]) == 650);
 	fixture_dispose();
 }

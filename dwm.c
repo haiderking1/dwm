@@ -288,6 +288,8 @@ static Window root, wmcheckwin;
 #include "reload/save.inc"
 #include "reload/restore.inc"
 #include "reload/control.inc"
+#include "wm/geometry/request.inc"
+#include "wm/mouse/events.inc"
 #include "wm/bsp/integration/forest.inc"
 #include "wm/bsp/integration/actions.inc"
 #include "wm/bsp/integration/checkpoint.inc"
@@ -1344,15 +1346,7 @@ resize(Client *c, int x, int y, int w, int h, int interact)
 void
 resizeclient(Client *c, int x, int y, int w, int h)
 {
-	XWindowChanges wc;
-
-	c->oldx = c->x; c->x = wc.x = x;
-	c->oldy = c->y; c->y = wc.y = y;
-	c->oldw = c->w; c->w = wc.width = w;
-	c->oldh = c->h; c->h = wc.height = h;
-	wc.border_width = c->bw;
-	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
-	configure(c);
+	resizeclient_request(c, x, y, w, h);
 	XSync(dpy, False);
 }
 

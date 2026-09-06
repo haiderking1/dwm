@@ -32,7 +32,8 @@ resize_update(TileResize *r, int x, int y)
 		}
 	}
 	if (changed) {
-		arrange(m);
+		/* Membership and stacking are unchanged during a resize frame. */
+		resize_tile(m);
 		resize_remember(r, m);
 	}
 	return 1;

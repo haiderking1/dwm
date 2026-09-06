@@ -1,5 +1,5 @@
 static void
-resizeclient(Client *c, int x, int y, int w, int h)
+resizeclient_request(Client *c, int x, int y, int w, int h)
 {
 	c->x = x; c->y = y; c->w = w; c->h = h;
 	++f.resizes;

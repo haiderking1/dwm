@@ -16,6 +16,7 @@ bar-bridge:
 
 ${OBJ}: config.h config.mk config/commands.h config/keys.h
 dwm.o: input/settings.h wm/fullscreen.h startup/autostart.h config/autostart.h config/reload.h reload/build.h reload/state.h reload/save.inc reload/restore.inc reload/control.inc
+dwm.o: wm/geometry/request.inc wm/mouse/events.inc
 dwm.o: wm/drag/placement.inc wm/drag/mouse.inc wm/drag/bsp.inc
 dwm.o: wm/bsp/bsp.h wm/bsp/hooks.h $(wildcard wm/bsp/integration/*.inc)
 $(patsubst %.c,%.o,$(wildcard wm/bsp/core/*.c)): wm/bsp/bsp.h $(wildcard wm/bsp/core/*.h)
