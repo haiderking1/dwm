@@ -3,6 +3,7 @@
 My dwm 6.8 setup with a Quickshell bar matching my Jellybeans Waybar theme.
 
 - Super-based shortcuts and ten workspaces.
+- Super+left-drag swaps tiled windows on drop; empty drops snap back.
 - Fullscreen toggle, flat mouse acceleration, and a 200 ms keyboard repeat delay at about 35 repeats per second.
 - Native autostart and background rebuild/reload with window and workspace restoration.
 - Quickshell workspace controls, clock, RAM, PipeWire volume, and system tray.

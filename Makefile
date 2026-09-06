@@ -16,6 +16,7 @@ bar-bridge:
 
 ${OBJ}: config.h config.mk config/commands.h config/keys.h
 dwm.o: input/settings.h wm/fullscreen.h startup/autostart.h config/autostart.h config/reload.h reload/build.h reload/state.h reload/save.inc reload/restore.inc reload/control.inc
+dwm.o: wm/drag/placement.inc wm/drag/mouse.inc
 dwm.o: bar/wm/docks.inc bar/wm/ipc.inc bar/wm/geometry.h bar/wm/json.h
 bar/wm/geometry.o: bar/wm/geometry.h
 bar/wm/json.o: bar/wm/json.h
