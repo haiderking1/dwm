@@ -4,6 +4,9 @@
 #include <assert.h>
 #include <string.h>
 
+extern int shot_hook_pressed;
+extern KeyCode shot_hook_keycode;
+
 static XEvent
 generic_event(int type)
 {
@@ -178,10 +181,55 @@ hotplug_and_races(void)
 	assert(server.previous_errors == 1);
 }
 
+static void
+raw_keys(void)
+{
+	XEvent event;
+	XIRawEvent raw = {0};
+
+	fake_reset();
+	input_setup(test_display, 1);
+	shot_hook_pressed = -1;
+	shot_hook_keycode = 0;
+
+	/* Other extensions and evtypes never reach the shot hook. */
+	event = generic_event(XI_RawKeyPress);
+	event.xcookie.extension = FAKE_OPCODE + 1;
+	input_handle_event(test_display, &event);
+	assert(shot_hook_pressed == -1);
+	event = generic_event(XI_RawMotion);
+	input_handle_event(test_display, &event);
+	assert(shot_hook_pressed == -1);
+	assert(server.cookie_gets == 0 && server.cookie_frees == 0);
+
+	/* Press and release reach the hook with the keycode. A borrowed
+	 * cookie is not acquired or freed; an unacquired one is both. */
+	raw.detail = 66;
+	server.cookie_data = &raw;
+	event = generic_event(XI_RawKeyPress);
+	event.xcookie.data = &raw;
+	input_handle_event(test_display, &event);
+	assert(shot_hook_pressed == 1 && shot_hook_keycode == 66);
+	assert(event.xcookie.data == &raw);
+	assert(server.cookie_gets == 0 && server.cookie_frees == 0);
+	event = generic_event(XI_RawKeyRelease);
+	event.xcookie.data = &raw;
+	input_handle_event(test_display, &event);
+	assert(shot_hook_pressed == 0 && shot_hook_keycode == 66);
+	assert(event.xcookie.data == &raw);
+	server.cookie_data = &raw;
+	event = generic_event(XI_RawKeyPress);
+	input_handle_event(test_display, &event);
+	assert(shot_hook_pressed == 1 && shot_hook_keycode == 66);
+	assert(event.xcookie.data == NULL);
+	assert(server.cookie_gets == 1 && server.cookie_frees == 1);
+}
+
 void
 test_events(void)
 {
 	setup_and_failures();
 	cookies();
+	raw_keys();
 	hotplug_and_races();
 }

@@ -7,6 +7,7 @@ My dwm 6.8 setup with a Quickshell bar matching my Jellybeans Waybar theme.
 - Super+left-drag swaps tiled windows on drop; empty drops snap back.
 - Super+right-drag resizes shared tile boundaries without making windows float.
 - Fullscreen toggle, flat mouse acceleration, and a 200 ms keyboard repeat delay at about 35 repeats per second.
+- Print-key screenshots: crosshair area selection saved to Pictures/Screenshots, with dwm itself serving the CLIPBOARD so pastes keep working in games. XI2 raw keys keep the Print binds alive inside keyboard-grabbing games, where selection runs on raw pointer events and captures read the game window directly.
 - Native autostart and background rebuild/reload with window and workspace restoration.
 - Quickshell workspace controls, clock, RAM, PipeWire volume, and system tray.
 - Native X11 dock support and a bar bridge. The bridge reads the loaded wallpaper for a matching bar background without a compositor.
@@ -25,6 +26,7 @@ This is a personal setup, not a portable distribution. Paths currently point to 
 | wm/bsp/ | Persistent BSP layout and mouse controls |
 | bar/quickshell/ | Quickshell configuration snapshot |
 | bar/bridge/ | Native X11 state and wallpaper bridge |
+| shot/ | Screenshot selection, capture and dependency-free PNG encoder |
 | session/ | SDDM session and installer |
 
 The live Quickshell configuration is ~/.config/quickshell/dwm. This repository contains a source copy under bar/quickshell; copy changes between these directories when updating or restoring the setup. Screenshots and generated artifacts are excluded.
@@ -50,6 +52,8 @@ Super+Shift+R rebuilds and reloads dwm without logging out. Quickshell watches i
 | Super+Q / E / X | Alacritty / Nautilus / Zen |
 | Super+D | Rofi |
 | Super+C | Close window |
+| Print / Shift+Print | Select area / whole monitor screenshot |
+| Super+Shift+Print | Screenshot every monitor |
 | Super+F | Toggle fullscreen |
 | Super+T / Super+Shift+T | BSP dwindle / weighted master-and-stack |
 | Super+S | Rotate the focused parent split |

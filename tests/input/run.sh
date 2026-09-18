@@ -8,6 +8,7 @@ trap 'exit 1' HUP INT TERM
 # CFLAGS is deliberately word-split for optional sanitizer/compiler flags.
 ${CC:-cc} -std=c99 -pedantic -Wall -Wextra -Werror ${CFLAGS:-} \
     input/settings.c tests/input/fake_xlib.c tests/input/fake_xi.c \
+    tests/input/shot_hook.c \
     tests/input/properties_test.c tests/input/events_test.c tests/input/main.c \
     -o "$build/settings-test"
 "$build/settings-test"

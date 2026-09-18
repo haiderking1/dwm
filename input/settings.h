@@ -21,4 +21,17 @@
 void input_setup(Display *display, Window root);
 void input_handle_event(Display *display, XEvent *event);
 
+/* True when XI2 raw key events are selected on the root window. Raw keys
+ * reach dwm through any grab, so keybinds that must survive games use them
+ * and skip their core passive grabs. */
+Bool input_raw_keys_active(void);
+
+/* Merge (on) or unmerge (off) raw pointer events into the root XI2
+ * selection, for callers that must observe the pointer while another
+ * client holds a grab. Returns 0 when XI2 2.1+ is unavailable. */
+int input_raw_pointer_select(int on);
+
+/* XI2 opcode for recognizing GenericEvent cookies, or -1 without XI2. */
+int input_xi_opcode(void);
+
 #endif

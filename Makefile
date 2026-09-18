@@ -3,7 +3,7 @@
 
 include config.mk
 
-SRC = drw.c dwm.c util.c bar/wm/geometry.c bar/wm/json.c input/settings.c startup/autostart.c reload/build.c $(wildcard wm/bsp/core/*.c)
+SRC = drw.c dwm.c util.c bar/wm/geometry.c bar/wm/json.c input/settings.c startup/autostart.c reload/build.c shot/png.c shot/rgb.c shot/band.c $(wildcard wm/bsp/core/*.c)
 OBJ = ${SRC:.c=.o}
 
 all: dwm bar-bridge
@@ -22,11 +22,15 @@ dwm.o: wm/bsp/bsp.h wm/bsp/hooks.h $(wildcard wm/bsp/integration/*.inc)
 $(patsubst %.c,%.o,$(wildcard wm/bsp/core/*.c)): wm/bsp/bsp.h $(wildcard wm/bsp/core/*.h)
 dwm.o: wm/resize/math.h wm/resize/layout.inc wm/resize/topology.inc wm/resize/precision.inc wm/resize/boundary.inc wm/resize/mouse.inc
 dwm.o: bar/wm/docks.inc bar/wm/ipc.inc bar/wm/geometry.h bar/wm/json.h
+dwm.o: shot/png.h shot/rgb.h shot/band.h shot/selection.inc shot/clipboard.inc shot/shot.inc
+shot/png.o: shot/png.h
+shot/rgb.o: shot/rgb.h
+shot/band.o: shot/band.h
 bar/wm/geometry.o: bar/wm/geometry.h
 bar/wm/json.o: bar/wm/json.h
 reload/build.o: reload/build.h
 startup/autostart.o: startup/autostart.h
-input/settings.o: input/settings.h
+input/settings.o: input/settings.h shot/shot.h
 
 config.h:
 	cp config.def.h $@
@@ -41,7 +45,7 @@ clean:
 dist: clean
 	mkdir -p dwm-${VERSION}
 	cp -R LICENSE Makefile README config.def.h config.mk\
-		dwm.1 drw.h util.h drw.c dwm.c util.c dwm.png transient.c bar config session input wm startup reload tests dwm-${VERSION}
+		dwm.1 drw.h util.h drw.c dwm.c util.c dwm.png transient.c bar config session input shot wm startup reload tests dwm-${VERSION}
 	tar -cf dwm-${VERSION}.tar dwm-${VERSION}
 	gzip dwm-${VERSION}.tar
 	rm -rf dwm-${VERSION}

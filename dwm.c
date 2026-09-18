@@ -41,6 +41,7 @@
 #include <X11/Xproto.h>
 #include <X11/Xutil.h>
 #ifdef XINERAMA
+#include <X11/extensions/XInput2.h>
 #include <X11/extensions/Xinerama.h>
 #endif /* XINERAMA */
 #include <X11/Xft/Xft.h>
@@ -213,6 +214,13 @@ static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
 static void setup(void);
 static void seturgent(Client *c, int urg);
+static void shot_destroynotify(XDestroyWindowEvent *e);
+static void shot_monitor(const Arg *arg);
+static int shot_propertynotify(XPropertyEvent *e);
+static void shot_region(const Arg *arg);
+static void shot_screen(const Arg *arg);
+static void shot_selclear(XEvent *e);
+static void shot_selrequest(XEvent *e);
 static void showhide(Client *c);
 static void spawn(const Arg *arg);
 static void tag(const Arg *arg);
@@ -266,6 +274,8 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[MapRequest] = maprequest,
 	[MotionNotify] = motionnotify,
 	[PropertyNotify] = propertynotify,
+	[SelectionClear] = shot_selclear,
+	[SelectionRequest] = shot_selrequest,
 	[UnmapNotify] = unmapnotify
 };
 static Atom wmatom[WMLast], netatom[NetLast];
@@ -303,6 +313,12 @@ static Window root, wmcheckwin;
 #include "wm/drag/placement.inc"
 #include "wm/drag/bsp.inc"
 #include "wm/drag/mouse.inc"
+#include "shot/png.h"
+#include "shot/rgb.h"
+#include "shot/band.h"
+#include "shot/selection.inc"
+#include "shot/clipboard.inc"
+#include "shot/shot.inc"
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
@@ -697,6 +713,7 @@ destroynotify(XEvent *e)
 	Client *c;
 	XDestroyWindowEvent *ev = &e->xdestroywindow;
 
+	shot_destroynotify(ev);
 	if ((c = wintoclient(ev->window)))
 		unmanage(c, 1);
 }
@@ -1012,14 +1029,23 @@ grabkeys(void)
 		if (!syms)
 			return;
 		for (k = start; k <= end; k++)
-			for (i = 0; i < LENGTH(keys); i++)
+			for (i = 0; i < LENGTH(keys); i++) {
+				/* Shot keys ride XI2 raw events when available, so the
+				 * keyboard grab of a game cannot swallow them, and a core
+				 * grab here would double-fire every press. */
+				if (input_raw_keys_active()
+						&& (keys[i].func == shot_region
+								|| keys[i].func == shot_monitor
+								|| keys[i].func == shot_screen))
+					continue;
 				/* skip modifier codes, we do that ourselves */
 				if (keys[i].keysym == syms[(k - start) * skip])
 					for (j = 0; j < LENGTH(modifiers); j++)
 						XGrabKey(dpy, k,
-							 keys[i].mod | modifiers[j],
-							 root, True,
-							 GrabModeAsync, GrabModeAsync);
+								 keys[i].mod | modifiers[j],
+								 root, True,
+								 GrabModeAsync, GrabModeAsync);
+			}
 		XFree(syms);
 	}
 }
@@ -1286,6 +1312,8 @@ propertynotify(XEvent *e)
 	Window trans;
 	XPropertyEvent *ev = &e->xproperty;
 
+	if (shot_propertynotify(ev))
+		return;
 	if ((ev->window == root) && (ev->atom == XA_WM_NAME))
 		updatestatus();
 	else if (ev->state == PropertyDelete)

@@ -7,7 +7,9 @@
 Status
 XIQueryVersion(Display *display, int *major, int *minor)
 {
-	assert(display == test_display && *major == 2 && *minor == 0);
+	/* The module asks for 2.2 (raw events need 2.1); the fake negotiates
+	 * by leaving the requested version untouched. */
+	assert(display == test_display && *major == 2 && *minor == 2);
 	*major = server.version_major;
 	return server.version_status;
 }

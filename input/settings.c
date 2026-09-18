@@ -1,5 +1,7 @@
 #include "settings.h"
 
+#include "../shot/shot.h"
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,9 +13,12 @@
 #include <X11/extensions/XInput2.h>
 
 static Display *input_display;
+static Window input_root;
 static int xi_opcode = -1;
 static int xi_error_base;
 static Bool xi_ready;
+static Bool xi_raw_keys;
+static int xi_version_major, xi_version_minor;
 static XErrorHandler previous_error_handler;
 
 typedef struct {
@@ -225,23 +230,102 @@ select_events(Display *display, Window root)
 			memcpy(bits, selected[i].mask, (size_t)selected[i].mask_len);
 	XISetMask(bits, XI_HierarchyChanged);
 	XISetMask(bits, XI_DeviceChanged);
+	/* Raw events bypass every grab, so the shot keys survive games that
+	 * take the keyboard. They arrived with XI2 2.1; older servers fall back
+	 * to core grabs. */
+	xi_raw_keys = 0;
+	if (xi_version_major > 2 || (xi_version_major == 2 && xi_version_minor >= 1)) {
+		XISetMask(bits, XI_RawKeyPress);
+		XISetMask(bits, XI_RawKeyRelease);
+	}
 	mask.deviceid = XIAllDevices;
 	mask.mask_len = length;
 	mask.mask = bits;
-	if (XISelectEvents(display, root, &mask, 1) != Success)
+	if (XISelectEvents(display, root, &mask, 1) == Success)
+		xi_raw_keys = (xi_version_major > 2
+			|| (xi_version_major == 2 && xi_version_minor >= 1));
+	else
 		fprintf(stderr, "input: cannot select XI2 hotplug events\n");
 	free(bits);
 	XFree(selected);
 }
 
+Bool
+input_raw_keys_active(void)
+{
+	return xi_ready && xi_raw_keys;
+}
+
+int
+input_xi_opcode(void)
+{
+	return xi_opcode;
+}
+
+/* Merge (on) or unmerge (off) raw pointer events into the root selection.
+ * Raw events are the only pointer input that survives another client's
+ * grab, which is how shot selection works inside a game. Returns 0 when
+ * XI2 or the server version cannot provide them. */
+int
+input_raw_pointer_select(int on)
+{
+	XIEventMask *selected, mask;
+	int count = 0, i, length = XIMaskLen(XI_RawMotion);
+	unsigned char *bits;
+
+	if (!xi_ready || xi_version_major < 2
+			|| (xi_version_major == 2 && xi_version_minor < 1))
+		return 0;
+	selected = XIGetSelectedEvents(input_display, input_root, &count);
+	if (count < 0) {
+		XFree(selected);
+		return 0;
+	}
+	for (i = 0; i < count; ++i)
+		if (selected[i].deviceid == XIAllDevices && selected[i].mask_len > length)
+			length = selected[i].mask_len;
+	bits = calloc((size_t)length, 1);
+	if (!bits) {
+		XFree(selected);
+		return 0;
+	}
+	for (i = 0; i < count; ++i)
+		if (selected[i].deviceid == XIAllDevices)
+			memcpy(bits, selected[i].mask, (size_t)selected[i].mask_len);
+	if (on) {
+		XISetMask(bits, XI_RawButtonPress);
+		XISetMask(bits, XI_RawButtonRelease);
+		XISetMask(bits, XI_RawMotion);
+	} else {
+		XIClearMask(bits, XI_RawButtonPress);
+		XIClearMask(bits, XI_RawButtonRelease);
+		XIClearMask(bits, XI_RawMotion);
+	}
+	mask.deviceid = XIAllDevices;
+	mask.mask_len = length;
+	mask.mask = bits;
+	begin_requests(input_display);
+	if (XISelectEvents(input_display, input_root, &mask, 1) != Success) {
+		end_requests(input_display);
+		free(bits);
+		XFree(selected);
+		return 0;
+	}
+	end_requests(input_display);
+	free(bits);
+	XFree(selected);
+	return 1;
+}
+
 void
 input_setup(Display *display, Window root)
 {
-	int event_base, major = 2, minor = 0;
+	int event_base, major = 2, minor = 2;
 
 	if (!display)
 		return;
 	input_display = display;
+	input_root = root;
 	xi_ready = False;
 	xi_opcode = -1;
 	begin_requests(display);
@@ -254,6 +338,9 @@ input_setup(Display *display, Window root)
 		fprintf(stderr, "input: XI2 unavailable; using core pointer control only\n");
 	} else {
 		xi_ready = True;
+		/* XIQueryVersion overwrote these with the negotiated version. */
+		xi_version_major = major;
+		xi_version_minor = minor;
 		/* Subscribe before enumerating so hotplug during setup is not lost. */
 		select_events(display, root);
 		configure_pointers(display, XIAllDevices);
@@ -272,7 +359,8 @@ input_handle_event(Display *display, XEvent *event)
 		return;
 	cookie = &event->xcookie;
 	if (cookie->display != display || cookie->extension != xi_opcode ||
-	    (cookie->evtype != XI_HierarchyChanged && cookie->evtype != XI_DeviceChanged))
+	    (cookie->evtype != XI_HierarchyChanged && cookie->evtype != XI_DeviceChanged &&
+	     cookie->evtype != XI_RawKeyPress && cookie->evtype != XI_RawKeyRelease))
 		return;
 	acquired = cookie->data == NULL;
 	if (acquired && !XGetEventData(display, cookie))
@@ -289,6 +377,11 @@ input_handle_event(Display *display, XEvent *event)
 					configure_pointers(display, hierarchy->info[i].deviceid);
 			end_requests(display);
 		}
+	} else if (cookie->data && (cookie->evtype == XI_RawKeyPress
+			|| cookie->evtype == XI_RawKeyRelease)) {
+		/* Delivered through other clients' grabs; see shot_raw_key. */
+		shot_raw_key(cookie->evtype == XI_RawKeyPress,
+			((XIRawEvent *)cookie->data)->detail);
 	} else if (cookie->data) {
 		XIDeviceChangedEvent *changed = cookie->data;
 

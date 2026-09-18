@@ -15,8 +15,8 @@ The fake server checks property types, formats, lengths, truncated replies,
 32-bit integer/float representation, two- and three-entry profiles, unavailable
 flat profiles, missing atoms, pointer eligibility, and idempotent writes. Event
 tests cover subscription preservation, cookie ownership, unrelated events,
-hotplug, device changes, extension failures, and synchronous/asynchronous
-unplug races. Failure tests intentionally print warnings to stderr.
+raw key dispatch to the shot hook, hotplug, device changes, extension
+failures, and synchronous/asynchronous unplug races. Failure tests intentionally print warnings to stderr.
 
 A separate smoke executable links the module against the installed libXi and
 libX11. It calls only the null-argument paths. These checks do not verify a live

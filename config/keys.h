@@ -4,6 +4,10 @@ static const Key keys[] = {
 	{ MODKEY, XK_e, spawn, {.v = filecmd } },
 	{ MODKEY, XK_x, spawn, {.v = browsercmd } },
 	{ MODKEY, XK_d, spawn, {.v = roficmd } },
+	/* screenshots: Print selects an area, Shift+Print takes the monitor */
+	{ 0,                            XK_Print,  shot_region,    {0} },
+	{ ShiftMask,                    XK_Print,  shot_monitor,   {0} },
+	{ MODKEY|ShiftMask,             XK_Print,  shot_screen,    {0} },
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = termcmd } },
