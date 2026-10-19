@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/inotify.h>
 #include <sys/select.h>
@@ -201,6 +202,7 @@ static Monitor *recttomon(int x, int y, int w, int h);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
+static void restart(const Arg *arg);
 static void restack(Monitor *m);
 static void run(void);
 static void scan(void);
@@ -283,6 +285,7 @@ static Window root, wmcheckwin;
 #include "config.h"
 #include "input.c"
 #include "lua.c"
+#include "restart.c"
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
@@ -490,13 +493,15 @@ cleanup(void)
 	Monitor *m;
 	size_t i;
 
-	view(&a);
+	if (!restarting) /* hidden windows stay where they are for the next dwm */
+		view(&a);
 	selmon->lt[selmon->sellt] = &foo;
 	for (m = mons; m; m = m->next)
 		while (m->stack)
 			unmanage(m->stack, 0);
 	XUngrabKey(dpy, AnyKey, AnyModifier, root);
 	luacleanup();
+	restartcleanup();
 	while (mons)
 		cleanupmon(mons);
 	for (i = 0; i < CurLast; i++)
@@ -1406,9 +1411,10 @@ run(void)
 {
 	XEvent ev;
 	fd_set fds;
+	struct timeval tv;
 	int xfd = ConnectionNumber(dpy);
 
-	/* main event loop, also woken up by changes to config.lua */
+	/* main event loop, also woken up by changes to config.lua and the binary */
 	XSync(dpy, False);
 	while (running) {
 		while (running && XPending(dpy)) {
@@ -1426,13 +1432,18 @@ run(void)
 		FD_SET(xfd, &fds);
 		if (inotifyfd != -1)
 			FD_SET(inotifyfd, &fds);
-		if (select(MAX(xfd, inotifyfd) + 1, &fds, NULL, NULL, NULL) == -1) {
+		if (exefd != -1)
+			FD_SET(exefd, &fds);
+		if (select(MAX(xfd, MAX(inotifyfd, exefd)) + 1, &fds, NULL, NULL, exetimeout(&tv)) == -1) {
 			if (errno == EINTR)
 				continue;
 			die("dwm: select:");
 		}
 		if (inotifyfd != -1 && FD_ISSET(inotifyfd, &fds))
 			configchanged();
+		if (exefd != -1 && FD_ISSET(exefd, &fds))
+			exechanged();
+		exetimer();
 	}
 }
 
@@ -1656,6 +1667,7 @@ setup(void)
 	XChangeWindowAttributes(dpy, root, CWEventMask|CWCursor, &wa);
 	XSelectInput(dpy, root, wa.event_mask);
 	luainit();
+	initrestart();
 	focus(NULL);
 }
 
@@ -2217,9 +2229,21 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath proc exec", NULL) == -1)
 		die("pledge");
 #endif /* __OpenBSD__ */
+	/* hold the server so windows restored after a restart do not jump around */
+	XGrabServer(dpy);
 	scan();
+	restorestate();
+	XUngrabServer(dpy);
 	run();
+	if (restarting)
+		savestate();
 	cleanup();
 	XCloseDisplay(dpy);
+	if (restarting) {
+		if (*exepath)
+			execv(exepath, argv);
+		execvp(argv[0], argv);
+		die("dwm: restart failed:");
+	}
 	return EXIT_SUCCESS;
 }

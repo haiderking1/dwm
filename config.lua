@@ -58,5 +58,6 @@ for i = 1, dwm.ntags do
 end
 
 -- dwm
-key("super+shift", "r", dwm.reload) -- saving this file already reloads it
+-- saving this file reloads it, make install restarts dwm on its own
+key("super+shift", "r", dwm.restart) -- restart in place, windows stay put
 key("super+shift", "q", dwm.quit)

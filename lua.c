@@ -234,6 +234,14 @@ l_reload(lua_State *s)
 	return 0;
 }
 
+static int
+l_restart(lua_State *s)
+{
+	if (!loading)
+		restart(NULL);
+	return 0;
+}
+
 #define LUA_NOARG(f)  static int l_##f(lua_State *s) { f(&(Arg){0}); return 0; }
 #define LUA_INTARG(f) static int l_##f(lua_State *s) { f(&(Arg){.i = luaL_checkinteger(s, 1)}); return 0; }
 #define LUA_TAGARG(f) static int l_##f(lua_State *s) { f(&(Arg){.ui = tagarg(s)}); return 0; }
@@ -264,6 +272,7 @@ static const luaL_Reg luaapi[] = {
 	{ "input",            l_input },
 	{ "spawn",            l_spawn },
 	{ "reload",           l_reload },
+	{ "restart",          l_restart },
 	{ "quit",             l_quit },
 	{ "killclient",       l_killclient },
 	{ "togglebar",        l_togglebar },

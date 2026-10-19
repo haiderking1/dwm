@@ -55,6 +55,12 @@ To keep your config in this repository, symlink it:
     mkdir -p ~/.config/dwm
     ln -s "$PWD/config.lua" ~/.config/dwm/config.lua
 
+dwm restarts itself in place whenever its binary is replaced, so after
+changing the C code a "make && sudo make install" is all it takes. Windows
+keep their tags, monitor, floating state and order, and monitors keep their
+tags, layouts and master area. A new binary that does not start is not
+switched to. dwm.restart() (super+shift+r by default) restarts by hand.
+
 Everything else (appearance, tags, rules, layouts) and the fallback keys used
 when config.lua is missing are set in config.def.h, which is copied to the
 generated config.h on build.
