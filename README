@@ -5,7 +5,7 @@ dwm is an extremely fast, small, and dynamic window manager for X.
 
 Requirements
 ------------
-In order to build dwm you need the Xlib header files.
+In order to build dwm you need the Xlib, XInput 2 (libXi) and Lua header files.
 
 
 Installation
@@ -44,5 +44,17 @@ like this in your .xinitrc:
 
 Configuration
 -------------
-The configuration of dwm is done by creating a custom config.h
-and (re)compiling the source code.
+Keybindings and input settings live in ~/.config/dwm/config.lua (or
+$XDG_CONFIG_HOME/dwm/config.lua). See config.lua in this repository, which
+documents what it can do. dwm reloads it every time the file is saved, no
+restart needed. A config that fails to load leaves the running one in place
+and shows the error in the bar until it is fixed.
+
+To keep your config in this repository, symlink it:
+
+    mkdir -p ~/.config/dwm
+    ln -s "$PWD/config.lua" ~/.config/dwm/config.lua
+
+Everything else (appearance, tags, rules, layouts) and the fallback keys used
+when config.lua is missing are set in config.def.h, which is copied to the
+generated config.h on build.

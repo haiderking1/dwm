@@ -1,0 +1,4 @@
+dwm
+*.o
+config.h
+dwm-*.tar.gz

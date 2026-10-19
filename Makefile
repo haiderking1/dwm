@@ -12,8 +12,10 @@ all: dwm
 	${CC} -c ${CFLAGS} $<
 
 ${OBJ}: config.h config.mk
+dwm.o: input.c lua.c
 
-config.h:
+# config.h is generated, edit config.def.h (or better, config.lua)
+config.h: config.def.h
 	cp config.def.h $@
 
 dwm: ${OBJ}
@@ -24,8 +26,8 @@ clean:
 
 dist: clean
 	mkdir -p dwm-${VERSION}
-	cp -R LICENSE Makefile README config.def.h config.mk\
-		dwm.1 drw.h util.h ${SRC} dwm.png transient.c dwm-${VERSION}
+	cp -R LICENSE Makefile README config.def.h config.mk config.lua\
+		dwm.1 dwm.desktop drw.h util.h ${SRC} input.c lua.c dwm.png transient.c dwm-${VERSION}
 	tar -cf dwm-${VERSION}.tar dwm-${VERSION}
 	gzip dwm-${VERSION}.tar
 	rm -rf dwm-${VERSION}
@@ -37,9 +39,13 @@ install: all
 	mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	sed "s/VERSION/${VERSION}/g" < dwm.1 > ${DESTDIR}${MANPREFIX}/man1/dwm.1
 	chmod 644 ${DESTDIR}${MANPREFIX}/man1/dwm.1
+	mkdir -p ${DESTDIR}${PREFIX}/share/xsessions
+	sed "s|PREFIX|${PREFIX}|g" < dwm.desktop > ${DESTDIR}${PREFIX}/share/xsessions/dwm.desktop
+	chmod 644 ${DESTDIR}${PREFIX}/share/xsessions/dwm.desktop
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/dwm\
-		${DESTDIR}${MANPREFIX}/man1/dwm.1
+		${DESTDIR}${MANPREFIX}/man1/dwm.1\
+		${DESTDIR}${PREFIX}/share/xsessions/dwm.desktop
 
 .PHONY: all clean dist install uninstall
